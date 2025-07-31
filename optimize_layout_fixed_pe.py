@@ -33,8 +33,8 @@ def parse_args():
     parser.add_argument("--stop-n", type=int, default=5)
     return parser.parse_args()
 
-def snap_to_nearest(value):
-    candidates = [i for i in range(1, TOTAL_PES + 1) if MAX_MPITASKS_PER_NODE % i == 0 or i % MAX_MPITASKS_PER_NODE == 0]
+def snap_to_nearest(value, max_mpitasks_per_node):
+    candidates = [i for i in range(1, TOTAL_PES + 1) if max_mpitasks_per_node % i == 0 or i % max_mpitasks_per_node == 0]
     return min(candidates, key=lambda x: abs(x - value))
 
 def assign_rootpes(task_counts, overlap_map):
@@ -124,7 +124,7 @@ def parse_timing(case_dir):
 
 def objective(trial, caseroot, stop_option, stop_n, metric):
     with Case(caseroot, read_only=False) as case:
-        MAX_MPITASKS_PER_NODE = case.get_value("MAX_MPITASKS_PER_NODE")
+        max_mpitasks_per_node = case.get_value("MAX_MPITASKS_PER_NODE")
         comp_types = {comp: case.get_value(f"COMP_{comp}") for comp in COMPONENTS}
     stub_comps = {comp for comp, val in comp_types.items() if val.lower().startswith("s")}
 
@@ -139,7 +139,7 @@ def objective(trial, caseroot, stop_option, stop_n, metric):
         else:
             raw = raw_weights[comp] / weight_sum * TOTAL_PES
             bounded = min(max(TASK_MIN_LIMITS.get(comp, 1), int(raw)), TASK_MAX_LIMITS.get(comp, TOTAL_PES))
-            snapped = snap_to_nearest(bounded)
+            snapped = snap_to_nearest(bounded, max_mpitasks_per_node)
             task_counts[comp] = snapped
             print(f"{comp} raw={int(raw)}, bounded={bounded}, snapped={snapped}")
 
