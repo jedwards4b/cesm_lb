@@ -70,7 +70,7 @@ def configure_case(case: Case, config, stop_option, stop_n):
     case.set_value("STOP_N", stop_n)
     case.case_setup(reset=True)
     build.case_build(case._caseroot, case=case)
-    case.submit()
+    case.submit(no_batch=True)
 
 def parse_timing(case_dir):
     timing_dir = os.path.join(case_dir, "timing")
